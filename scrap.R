@@ -34,4 +34,5 @@ results <- grid_parameters %>%
   pmap(.f = get_trains, .progress = TRUE) %>%
   do.call(what = "rbind")
 
-results
+results %>%
+  write.csv2("test_workflow.csv")
