@@ -52,11 +52,11 @@ get_price <- function(train){
   
   if(identical(text, character(0))){
     
-    df_price <- data.frame(class = c("2nde", "1ère"),
+    df_price <- data.frame(class = c("2nde", "1ere"),
                            price = NA)
     
   }else{
-    class <- str_extract(text, pattern = "\\w+(?=\\s+classe)")
+    class <- str_extract(text, pattern = "\\w+(?=\\s+classe)") %>% stri_trans_general("Latin-ASCII")
     price <- str_extract(text, pattern = ".+?(?=€)") %>% str_trim()
     
     df_price <- data.frame(class = class,
@@ -64,7 +64,7 @@ get_price <- function(train){
     
   }
   
-  df_type <- data.frame(class = c("2nde", "1ère"))
+  df_type <- data.frame(class = c("2nde", "1ere"))
   res <- left_join(df_type,
                    df_price,
                    by = "class")
@@ -108,7 +108,7 @@ get_informations <- function(train){
                     arrivee = times[2],
                     type_train = type_train,
                     prix_2nde = prices$prix_2nde,
-                    prix_1ere = prices$prix_1ère)
+                    prix_1ere = prices$prix_1ere)
   
   return(res)
 }

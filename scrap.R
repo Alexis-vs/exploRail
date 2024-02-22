@@ -3,9 +3,12 @@
 library(dplyr)
 library(rvest) # with rvest >= 1.0.4 for 'read_html_live()'
 library(stringr)
+library(stringi)
 library(tidyr)
 library(purrr)
+library(arrow)
 
+source(file = "main.R")
 
 # expand grid
 cities_from_paris <-  c("Rennes", "Lyon", "Strasbourg", "Marseille")
@@ -28,11 +31,15 @@ grid_parameters <- rbind(grid_parameters_go,
                          grid_parameters_back) %>%
   arrange(date, origin, destination)
 
-grid_parameters
 
+# get results according to grid parameters
 results <- grid_parameters %>%
   pmap(.f = get_trains, .progress = TRUE) %>%
-  do.call(what = "rbind")
+  do.call(what = "rbind") %>%
+  mutate(day = as.Date(time_scrap),
+         hour = ifelse(as.numeric(format(time_scrap, "%H")) < 15, "10h", "22h"))
 
+# save in parquet format
 results %>%
-  write.csv2("test_workflow.csv")
+  group_by(day, hour) %>%
+  write_dataset(path = "data/")
