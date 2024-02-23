@@ -7,7 +7,7 @@ name: Web scraping trains
 jobs:
   render:
     name: Web scraping trains
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
 

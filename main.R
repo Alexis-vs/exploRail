@@ -24,7 +24,9 @@ session_configuration <- function(origin, destination, date){
   sess$click("._1o7t43lNaN")
   
   # click on 'plus tard' (later) button
-  Sys.sleep(1); sess$click("._aho4gji"); Sys.sleep(5); sess$click("._aho4gji"); Sys.sleep(5); sess$click("._aho4gji") # mettre + par sécurité genre 8
+  Sys.sleep(1); sess$click("._aho4gji"); Sys.sleep(5); sess$click("._aho4gji")
+  Sys.sleep(5); sess$click("._aho4gji"); Sys.sleep(5); sess$click("._aho4gji") # mettre + par sécurité genre 8
+  Sys.sleep(5); sess$click("._aho4gji") # rajouter if origin ou destination == Lyon ou Marseille, rajouter un click pour accélerer Strasboug et Rennes
   
   return(sess)
   
@@ -92,7 +94,7 @@ get_type_train <- function(train){
 }
 
 
-# Gather all extractions in a data frame
+# Wrapper with all extractions in a data frame
 get_informations <- function(train){
   
   # time train

@@ -8,12 +8,14 @@ library(tidyr)
 library(purrr)
 library(arrow)
 
-source(file = "main.R")
+source(file = "main.R",
+       encoding = "UTF-8") # UTF-8 encoding for euro symbol in regex 
+
 
 # expand grid
 cities_from_paris <-  c("Rennes", "Lyon", "Strasbourg", "Marseille")
-dates <- seq.Date(from = as.Date("2024-02-23"),
-                  to = as.Date("2024-02-24"),
+dates <- seq.Date(from = Sys.Date() + 1,
+                  to = as.Date("2024-05-22"),
                   by = "day")
 
 grid_parameters_go <- expand.grid(origin = "Paris",
