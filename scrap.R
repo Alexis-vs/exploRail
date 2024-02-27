@@ -13,7 +13,7 @@ source(file = "main.R",
 
 
 # expand grid
-cities_from_paris <-  c("Rennes", "Lyon", "Strasbourg", "Marseille")
+cities_from_paris <-  c("Rennes", "Lyon") # "Strasbourg", "Marseille"
 dates <- seq.Date(from = Sys.Date() + 1,
                   to = as.Date("2024-05-22"),
                   by = "day")
@@ -36,7 +36,7 @@ grid_parameters <- rbind(grid_parameters_go,
 
 # get results according to grid parameters
 results <- grid_parameters %>%
-  pmap(.f = get_trains, .progress = TRUE) %>%
+  pmap(.f = possibly(get_trains), .progress = TRUE) %>%
   do.call(what = "rbind") %>%
   mutate(day = as.Date(time_scrap),
          hour = ifelse(as.numeric(format(time_scrap, "%H")) < 15, "10h", "22h"))
