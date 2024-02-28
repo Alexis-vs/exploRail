@@ -13,9 +13,9 @@ source(file = "main.R",
 
 
 # expand grid
-cities_from_paris <-  c("Lyon") # "Rennes", "Strasbourg", "Marseille"
+cities_from_paris <-  c("Lyon", "Rennes") # "Strasbourg", "Marseille"
 dates <- seq.Date(from = Sys.Date() + 1,
-                  to = as.Date("2024-05-22"),
+                  to = as.Date("2024-03-02"), # 2024-05-22
                   by = "day")
 
 grid_parameters_go <- expand.grid(origin = "Paris",
