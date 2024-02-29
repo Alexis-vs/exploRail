@@ -25,11 +25,13 @@ session_configuration <- function(origin, destination, date){
   
   # click on 'plus tard' (later) button
   Sys.sleep(1); sess$click("._aho4gji"); Sys.sleep(5); sess$click("._aho4gji")
-  Sys.sleep(5); sess$click("._aho4gji"); Sys.sleep(5); sess$click("._aho4gji") # mettre + par sécurité genre 8
-  Sys.sleep(5); sess$click("._aho4gji") # rajouter if origin ou destination == Lyon ou Marseille, rajouter un click pour accélerer Strasboug et Rennes
+  Sys.sleep(5); sess$click("._aho4gji"); Sys.sleep(5); sess$click("._aho4gji")
+  if(any(c(origin, destination) %in% c("Lyon", "Marseille"))){
+    # more trains for Lyon and Marseille
+    Sys.sleep(5); sess$click("._aho4gji")
+  }
   
   return(sess)
-  
 }
 
 # Extract time for a trip
@@ -125,7 +127,10 @@ get_trains <- function(origin, destination, date){
   
   # Like a filter on the chosen day in date input
   trains_of_the_days <- session %>%
-    html_elements(xpath = '//*[@id="app"]/div/div/div[2]/div/div[1]/div/div[2]/div[1]/div[2]') %>%
+    html_elements("._5l6ub9") %>%
+    html_children() %>%
+    html_children() %>%
+    pluck(3) %>%
     html_children()
   
   trains_informations <- lapply(trains_of_the_days, get_informations)
@@ -135,7 +140,6 @@ get_trains <- function(origin, destination, date){
     mutate(origin = origin,
            destination = destination,
            time_scrap = time_scrap) %>%
-    mutate(days_before_trip = ceiling(depart - time_scrap)) %>% # round up (if scrap minuit ceiling, if scrap midi, floor)
     relocate(any_of(c("origin", "destination")), .before = 1) %>%
     mutate(across(starts_with("prix"), ~replace(., is.na(.), "complet")))
   

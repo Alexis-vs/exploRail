@@ -36,12 +36,16 @@ grid_parameters <- rbind(grid_parameters_go,
 
 # get results according to grid parameters
 results <- grid_parameters %>%
-  pmap(.f = possibly(get_trains), .progress = TRUE) %>%
+  pmap(.f = possibly(get_trains), .progress = TRUE)
+
+results <- results %>%
   do.call(what = "rbind") %>%
-  mutate(day = as.Date(time_scrap),
-         hour = ifelse(as.numeric(format(time_scrap, "%H")) < 15, "10h", "22h"))
+  mutate(scrap_day = as.Date(time_scrap),
+         scrap_hour = ifelse(as.numeric(format(time_scrap, "%H")) < 15, "10h", "22h")) %>%
+  mutate(days_before_trip = as.Date(depart) - scrap_day,
+         .before = "scrap_day")
 
 # save in parquet format
 results %>%
-  group_by(day, hour) %>%
+  group_by(scrap_day, scrap_hour) %>%
   write_dataset(path = "data/")
