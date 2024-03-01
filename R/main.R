@@ -143,7 +143,7 @@ get_trains <- function(origin, destination, date){
     html_elements("._5l6ub9") %>%
     html_children() %>%
     html_children() %>%
-    html_elements(xpath = '//div[@role="tabpanel"]') %>%
+    html_element(xpath = '//div[@role="tabpanel"]') %>%
     html_children()
   
   rm(session)
