@@ -26,9 +26,12 @@ session_configuration <- function(origin, destination, date){
   # click on 'plus tard' (later) button
   Sys.sleep(1); sess$click("._aho4gji"); Sys.sleep(5); sess$click("._aho4gji")
   Sys.sleep(5); sess$click("._aho4gji"); Sys.sleep(5); sess$click("._aho4gji")
+  Sys.sleep(5)
+  if(!is.na(sess %>% html_element("._aho4gji"))) sess$click("._aho4gji")
   if(any(c(origin, destination) %in% c("Lyon", "Marseille"))){
     # more trains for Lyon and Marseille
-    Sys.sleep(5); sess$click("._aho4gji")
+    Sys.sleep(5)
+    if(!is.na(sess %>% html_element("._aho4gji"))) sess$click("._aho4gji")
   }
   
   return(sess)
@@ -49,23 +52,32 @@ get_time <- function(train){
 # Extract prices for a trip
 get_price <- function(train){
   
-  text <- train %>%
-    html_element("._tyd8k6") %>%
-    html_elements("._1e867qro") %>%
-    html_text()
-  
-  if(identical(text, character(0))){
+  if(!is.na(train %>% html_element("._iejdyhf"))){
     
     df_price <- data.frame(class = c("2nde", "1ere"),
-                           price = NA)
+                           price = c("not_yet_for_sale", NA))
     
   }else{
-    class <- str_extract(text, pattern = "\\w+(?=\\s+classe)") %>% stri_trans_general("Latin-ASCII")
-    price <- str_extract(text, pattern = ".+?(?=€)") %>% str_trim()
     
-    df_price <- data.frame(class = class,
-                           price = price)
+    text <- train %>%
+      html_element("._tyd8k6") %>%
+      html_elements("._1e867qro") %>%
+      html_text()
     
+    if(identical(text, character(0))){
+      
+      df_price <- data.frame(class = c("2nde", "1ere"),
+                             price = NA)
+      
+    }else{
+      
+      class <- str_extract(text, pattern = "\\w+(?=\\s+classe)") %>% stri_trans_general("Latin-ASCII")
+      price <- str_extract(text, pattern = ".+?(?=€)") %>% str_trim()
+      
+      df_price <- data.frame(class = class,
+                             price = price)
+      
+    }
   }
   
   df_type <- data.frame(class = c("2nde", "1ere"))
@@ -90,7 +102,7 @@ get_type_train <- function(train){
     html_attr("data-testid")
   
   if(identical(type_train, character(0))){
-    type_train <- "correspondance"
+    type_train <- "train_connection"
   }
   return(type_train)
 }
@@ -108,11 +120,11 @@ get_informations <- function(train){
   # price
   prices <- get_price(train)
   
-  res <- data.frame(depart = times[1],
-                    arrivee = times[2],
+  res <- data.frame(departure = times[1],
+                    arrival = times[2],
                     type_train = type_train,
-                    prix_2nde = prices$prix_2nde,
-                    prix_1ere = prices$prix_1ere)
+                    price_2nde = prices$prix_2nde,
+                    price_1ere = prices$prix_1ere)
   
   return(res)
 }
@@ -126,12 +138,15 @@ get_trains <- function(origin, destination, date){
                                    date = date)
   
   # Like a filter on the chosen day in date input
+  Sys.sleep(2)
   trains_of_the_days <- session %>%
     html_elements("._5l6ub9") %>%
     html_children() %>%
     html_children() %>%
-    pluck(3) %>%
+    html_elements(xpath = '//div[@role="tabpanel"]') %>%
     html_children()
+  
+  rm(session)
   
   trains_informations <- lapply(trains_of_the_days, get_informations)
   results <- do.call("rbind", trains_informations)
@@ -141,7 +156,9 @@ get_trains <- function(origin, destination, date){
            destination = destination,
            time_scrap = time_scrap) %>%
     relocate(any_of(c("origin", "destination")), .before = 1) %>%
-    mutate(across(starts_with("prix"), ~replace(., is.na(.), "complet")))
+    mutate(across(starts_with("price"), ~replace(., is.na(.), "complet")))
+  
+  results$price_1ere[results$type_train %in% c("OUIGO", "ouigo_train_classique", "SNCF")] = "no_first_class"
   
   return(results)
   
