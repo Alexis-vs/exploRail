@@ -8,33 +8,41 @@ session_configuration <- function(origin, destination, date){
                 "T00%3A00%3A26&outwardDateType=departAfter&inwardDateType=departAfter&selectedTab=train&selectExactTime=true&splitSave=true&lang=fr&transportModes[]=mixed&dpiCookieId=YWKQGT428W51RKN4OK1STWT9M&partnershipType=accommodation&partnershipSelection=true")
   sess <- read_html_live(url)
   
-  # close pop-up window
-  Sys.sleep(2)
-  if(!is.na(sess %>% html_element(".onetrust-close-btn-handler.banner-close-button.ot-close-link"))){
-    sess$click(".onetrust-close-btn-handler.banner-close-button.ot-close-link")
-  }
-  
-  # origin and destination
-  sess$type("._ai52v9NaN", origin); sess$press("._ai52v9NaN", "Enter")
-  sess$type("._1qvaqukNaN", destination); sess$press("._1qvaqukNaN", "Enter")
-  
-  # other options like 'direct' or 'carte jeune' (young card) ?
-  
-  # validation
-  sess$click("._1o7t43lNaN")
-  
-  # click on 'plus tard' (later) button
-  Sys.sleep(1); sess$click("._aho4gji"); Sys.sleep(5); sess$click("._aho4gji")
-  Sys.sleep(5); sess$click("._aho4gji"); Sys.sleep(5); sess$click("._aho4gji")
-  Sys.sleep(5)
-  if(!is.na(sess %>% html_element("._aho4gji"))) sess$click("._aho4gji")
-  if(any(c(origin, destination) %in% c("Lyon", "Marseille"))){
-    # more trains for Lyon and Marseille
+  # session check
+  if(identical(is.na(sess$html_elements("._ai52v9NaN")), logical(0))){
+    message("no session")
+  }else{
+    
+    # close pop-up window
+    Sys.sleep(2)
+    if(!is.na(sess %>% html_element(".onetrust-close-btn-handler.banner-close-button.ot-close-link"))){
+      sess$click(".onetrust-close-btn-handler.banner-close-button.ot-close-link")
+    }
+    
+    # origin and destination
+    sess$type("._ai52v9NaN", origin); sess$press("._ai52v9NaN", "Enter")
+    sess$type("._1qvaqukNaN", destination); sess$press("._1qvaqukNaN", "Enter")
+    
+    # other options like 'direct' or 'carte jeune' (young card) ?
+    
+    # validation
+    sess$click("._1o7t43lNaN")
+    
+    # click on 'plus tard' (later) button
+    Sys.sleep(1); sess$click("._aho4gji"); Sys.sleep(5); sess$click("._aho4gji")
+    Sys.sleep(5); sess$click("._aho4gji"); Sys.sleep(5); sess$click("._aho4gji")
     Sys.sleep(5)
     if(!is.na(sess %>% html_element("._aho4gji"))) sess$click("._aho4gji")
+    if(any(c(origin, destination) %in% c("Lyon", "Marseille"))){
+      # more trains for Lyon and Marseille
+      Sys.sleep(5)
+      if(!is.na(sess %>% html_element("._aho4gji"))) sess$click("._aho4gji")
+    }
+    
+    return(sess)
+    
   }
   
-  return(sess)
 }
 
 # Extract time for a trip
@@ -130,36 +138,48 @@ get_informations <- function(train){
 }
 
 # Get information for all trains in a selected day
-get_trains <- function(origin, destination, date){
+get_trains <- function(origin, destination, date, local_save){
   
   time_scrap <- Sys.time()
   session <- session_configuration(origin = origin,
                                    destination = destination,
                                    date = date)
   
-  # Like a filter on the chosen day in date input
-  Sys.sleep(2)
-  trains_of_the_days <- session %>%
-    html_elements("._5l6ub9") %>%
-    html_children() %>%
-    html_children() %>%
-    html_element(xpath = '//div[@role="tabpanel"]') %>%
-    html_children()
-  
-  rm(session)
-  
-  trains_informations <- lapply(trains_of_the_days, get_informations)
-  results <- do.call("rbind", trains_informations)
-  
-  results <- results %>%
-    mutate(origin = origin,
-           destination = destination,
-           time_scrap = time_scrap) %>%
-    relocate(any_of(c("origin", "destination")), .before = 1) %>%
-    mutate(across(starts_with("price"), ~replace(., is.na(.), "complet")))
-  
-  results$price_1ere[results$type_train %in% c("OUIGO", "ouigo_train_classique", "SNCF")] = "no_first_class"
-  
-  return(results)
+  if(!is.null(session)){
+    
+    # Like a filter on the chosen day in date input
+    Sys.sleep(2)
+    trains_of_the_days <- session %>%
+      html_elements("._5l6ub9") %>%
+      html_children() %>%
+      html_children() %>%
+      html_element(xpath = '//div[@role="tabpanel"]') %>%
+      html_children()
+    
+    rm(session)
+    
+    trains_informations <- lapply(trains_of_the_days, get_informations)
+    results <- do.call("rbind", trains_informations)
+    
+    results <- results %>%
+      mutate(origin = origin,
+             destination = destination,
+             time_scrap = time_scrap) %>%
+      relocate(any_of(c("origin", "destination")), .before = 1) %>%
+      mutate(across(starts_with("price"), ~replace(., is.na(.), "complet")))
+    
+    results$price_1ere[results$type_train %in% c("OUIGO", "ouigo_train_classique", "SNCF")] = "no_first_class"
+    
+    # local save
+    if(local_save == TRUE){
+      if(!dir.exists("data_temp")) dir.create("data_temp")
+      filename = paste0(paste(origin, destination, date, time_scrap, sep = "_"), ".rds")
+      results %>%
+        saveRDS(file = file.path("data_temp", filename))
+    }else{
+      return(results)
+    }
+    
+  }
   
 }
