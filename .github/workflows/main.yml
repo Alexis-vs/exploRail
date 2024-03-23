@@ -1,6 +1,6 @@
-# on: 
-#   schedule:  
-#     - cron:  '30 8,20 * * *'
+on:
+  schedule:
+    - cron:  '30 8,20 * * *'
     
 name: Web scraping trains
 
@@ -27,7 +27,7 @@ jobs:
           renv::restore()
 
       - name: Scrape the data
-        run: Rscript scrap.R
+        run: Rscript R/scrap.R
 
       - name: Commit results
         run: |
