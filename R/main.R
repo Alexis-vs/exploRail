@@ -264,12 +264,13 @@ get_trains <- function(origin, destination, date, local_save = FALSE, view_curre
   # sort dates
   date_char = date[order(date)] %>% as.character()
   
-  results <- lapply(X = date_char,
-                    FUN = maxi_wrap,
-                    origin = origin,
-                    destination = destination,
-                    session = sess,
-                    local_save = local_save)
+  results <- map(date_char,
+                 .f = possibly(maxi_wrap),
+                 origin = origin,
+                 destination = destination,
+                 session = sess,
+                 local_save = local_save,
+                 .progress = TRUE)
   
   sess$session$close()
   rm(sess)

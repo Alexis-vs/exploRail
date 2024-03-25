@@ -38,6 +38,8 @@ results_df <- results %>%
   mutate(scrap_day = as.Date(time_scrap),
          scrap_hour = ifelse(as.numeric(format(time_scrap, "%H")) < 15, "10h", "22h")) %>%
   mutate(days_before_trip = as.Date(departure) - scrap_day,
-         .before = "scrap_day") %>%
+         .before = "scrap_day")
+
+results_df %>%
   group_by(scrap_day, scrap_hour) %>%
   write_dataset(path = file.path(varglobales$dir$data))
